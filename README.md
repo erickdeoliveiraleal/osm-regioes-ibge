@@ -56,12 +56,31 @@ docker build -t osmium-tool .
 curl -L -o brazil-latest.osm.pbf https://download.geofabrik.de/south-america/brazil-latest.osm.pbf
 python -X utf8 recorta.py brazil-latest.osm.pbf 310037 310038 310039
 python -X utf8 recorta.py brazil-latest.osm.pbf 310037 --ruas
+python -X utf8 recorta.py brazil-latest.osm.pbf r12907541 r12907534
+python -X utf8 recorta.py brazil-latest.osm.pbf --osm 12907541 12907534 --ruas
 ```
 
-Os recortes saem em `saida/<codigo>_<nome>.osm.pbf`, ao lado do `.pbf`, com o
-contorno da região incluído. `--ruas` gera também `…ruas.osm.pbf` só com as vias
-`highway=*`. A região é encontrada pelo `IBGE:GEOCODIGO`, então funciona com
-qualquer código de região (ou município) que tenha relação no OSM.
+Cada região pode ser indicada de dois jeitos:
+
+- **Código IBGE** (`310037`): procura a relação com esse `IBGE:GEOCODIGO`.
+  Funciona com qualquer código de região (ou município) que tenha relação no OSM.
+- **Id da relação no OSM** com `r` na frente (`r12907541`). Com `--osm`, os
+  números sem `r` também são tratados como ids de relação, para colar direto a
+  coluna "Relação OSM" da planilha.
+
+Todas as regiões vão **na mesma linha**, separadas por espaço. Uma lista colada
+com uma por linha faz o terminal tentar rodar cada linha como um comando.
+
+Sai um arquivo por região em `saida/`, ao lado do `.pbf`, com o contorno da
+região incluído: `<codigo>_<nome>.osm.pbf` quando pedida pelo código IBGE e
+`r<id>_<nome>.osm.pbf` quando pedida pelo id (o `IBGE:GEOCODIGO` do `.pbf` pode
+estar desatualizado, então não é usado no nome). `--ruas` gera também
+`…ruas.osm.pbf` só com as vias `highway=*` e o contorno.
+
+As regiões são recortadas em lotes de 5 por leitura do `.pbf` do Brasil, porque
+cada região do lote ocupa cerca de 1 GB de memória no osmium (o Docker Desktop
+tem 16 GB numa máquina de 32 GB). Cada lote leva uns 2,5 minutos; 15 regiões
+levaram cerca de 9 minutos.
 
 O extrato da Geofabrik é atualizado uma vez por dia e vem sem usuário e
 changeset (mantém versão e data). Antes de editar no JOSM, use
