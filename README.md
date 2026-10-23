@@ -69,11 +69,13 @@ changeset (mantém versão e data). Antes de editar no JOSM, use
 
 ### Alternativa sem `.pbf`: Overpass direto no JOSM
 
-Em *Arquivo → Baixar dados → Baixar do Overpass API* (modo avançado):
+Em *Arquivo → Baixar dados → Baixar do Overpass API* (modo avançado), cole a
+consulta abaixo trocando `10570191` pelo id da relação da região (no exemplo,
+a Região Geográfica Imediata de Barreiros - Sirinhaém):
 
 ```
 [out:xml][timeout:600];
-rel(<id da relação>);
+rel(10570191);
 map_to_area->.regiao;
 (
   way(area.regiao);
@@ -81,3 +83,13 @@ map_to_area->.regiao;
 (._;>;);
 out meta;
 ```
+
+- `map_to_area` transforma a relação numa área; `way(area.regiao)` pega todas
+  as vias dentro dela (as que cruzam a borda vêm inteiras).
+- `(._;>;)` inclui os nós das vias e `out meta` traz versão e autor, o que
+  permite editar e enviar pelo JOSM.
+- Para incluir pontos e relações, troque `way(area.regiao);` por
+  `nwr(area.regiao);`. Para só as ruas, use `way[highway](area.regiao);`.
+- Em regiões grandes (São Paulo, Rio de Janeiro, Belo Horizonte) a consulta
+  pode estourar o tempo ou pesar no JOSM: baixe por município ou filtre por
+  tipo de via.
