@@ -1,0 +1,12 @@
+# Dados baixados e arquivos gerados
+dados/
+*.osm
+*.osm.pbf
+*.osc
+*.geojson
+*.xlsx
+report.json
+report.md
+contornos.json
+recortes/saida/
+__pycache__/
