@@ -19,6 +19,7 @@ Exemplos:
 
 Os recortes saem em saida/<codigo>_<nome>.osm.pbf (pedido por código IBGE) ou
 saida/r<id>_<nome>.osm.pbf (pedido por id), ao lado do .pbf de entrada.
+Polígonos (.geojson) e arquivos intermediários ficam em saida/aux/.
 As regiões são recortadas em lotes de 5 por leitura do .pbf, para caber na
 memória do Docker.
 """
@@ -65,23 +66,24 @@ def slug(texto):
 # 1. Contornos das regiões pedidas: por IBGE:GEOCODIGO (não depende de
 # boundary/border_type, que podem estar desatualizados no .pbf) e/ou por id
 saida = pasta / "saida"
-saida.mkdir(exist_ok=True)
+aux = saida / "aux"  # polígonos e arquivos intermediários; em saida/ ficam só os recortes
+aux.mkdir(parents=True, exist_ok=True)
 print("Separando os contornos das regiões...")
 partes = []
 if codigos:
     osmium("tags-filter", pbf.name, "r/IBGE:GEOCODIGO=" + ",".join(codigos),
-           "-o", "saida/contornos_cod.osm.pbf", "--overwrite")
-    partes.append("saida/contornos_cod.osm.pbf")
+           "-o", "saida/aux/contornos_cod.osm.pbf", "--overwrite")
+    partes.append("saida/aux/contornos_cod.osm.pbf")
 if relacoes:
     osmium("getid", "-r", pbf.name, *[f"r{r}" for r in relacoes],
-           "-o", "saida/contornos_rel.osm.pbf", "--overwrite")
-    partes.append("saida/contornos_rel.osm.pbf")
-osmium("merge", *partes, "-o", "saida/contornos.osm.pbf", "--overwrite")
-osmium("export", "saida/contornos.osm.pbf", "-o", "saida/contornos.geojson", "--overwrite",
+           "-o", "saida/aux/contornos_rel.osm.pbf", "--overwrite")
+    partes.append("saida/aux/contornos_rel.osm.pbf")
+osmium("merge", *partes, "-o", "saida/aux/contornos.osm.pbf", "--overwrite")
+osmium("export", "saida/aux/contornos.osm.pbf", "-o", "saida/aux/contornos.geojson", "--overwrite",
        "--geometry-types=polygon", "-a", "type,id")
 
 por_codigo, por_relacao = {}, {}
-for f in json.loads((saida / "contornos.geojson").read_text(encoding="utf-8"))["features"]:
+for f in json.loads((aux / "contornos.geojson").read_text(encoding="utf-8"))["features"]:
     p = f["properties"]
     if p.get("@type") != "relation":
         continue
@@ -102,7 +104,7 @@ for tipo, valor in pedidos:
     nome = re.sub(r"^Regi[aã]o (Geogr[aá]fica )?\w+ d[eoa]s? ", "", p.get("name", ""))
     # Pedido por id usa r<id> no nome: o IBGE:GEOCODIGO do .pbf pode estar desatualizado
     base = f"{valor if tipo == 'cod' else 'r' + valor}_{slug(nome)}"
-    poligono = saida / f"{base}.geojson"
+    poligono = aux / f"{base}.geojson"
     poligono.write_text(json.dumps({"type": "FeatureCollection", "features": [f]}), encoding="utf-8")
     extracts.append({"output": f"{base}.osm.pbf",
                      "polygon": {"file_name": poligono.name, "file_type": "geojson"}})  # relativo ao config.json
@@ -112,25 +114,25 @@ if not extracts:
 
 # 3. Recorte em lotes: cada região do lote ocupa ~1 GB de memória no osmium
 # ao ler o Brasil inteiro, então várias regiões numa leitura só estouram o Docker
-config = saida / "config.json"
+config = aux / "config.json"
 lotes = [extracts[i:i + LOTE] for i in range(0, len(extracts), LOTE)]
 for n, lote in enumerate(lotes, 1):
     print(f"Recortando {len(lote)} região(ões), lote {n} de {len(lotes)}...")
     config.write_text(json.dumps({"directory": "saida", "extracts": lote}, indent=1), encoding="utf-8")
-    osmium("extract", "-c", "saida/config.json", "-s", "complete_ways", "--overwrite", pbf.name)
+    osmium("extract", "-c", "saida/aux/config.json", "-s", "complete_ways", "--overwrite", pbf.name)
 
 # 4. Opcional: só as ruas, mais a relação do contorno com suas vias e nós
 arquivos = [e["output"] for e in extracts]
 if so_ruas:
     for e in extracts:
         ruas = e["output"].replace(".osm.pbf", ".ruas.osm.pbf")
-        osmium("tags-filter", f"saida/{e['output']}", "w/highway", "-o", "saida/_ruas.osm.pbf", "--overwrite")
-        osmium("getid", "-r", f"saida/{e['output']}", f"r{relacao_do_recorte[e['output']]}", "-o", "saida/_contorno.osm.pbf",
+        osmium("tags-filter", f"saida/{e['output']}", "w/highway", "-o", "saida/aux/_ruas.osm.pbf", "--overwrite")
+        osmium("getid", "-r", f"saida/{e['output']}", f"r{relacao_do_recorte[e['output']]}", "-o", "saida/aux/_contorno.osm.pbf",
                "--overwrite")
-        osmium("merge", "saida/_ruas.osm.pbf", "saida/_contorno.osm.pbf", "-o", f"saida/{ruas}", "--overwrite")
+        osmium("merge", "saida/aux/_ruas.osm.pbf", "saida/aux/_contorno.osm.pbf", "-o", f"saida/{ruas}", "--overwrite")
         arquivos.append(ruas)
     for tmp in ("_ruas.osm.pbf", "_contorno.osm.pbf"):
-        (saida / tmp).unlink(missing_ok=True)
+        (aux / tmp).unlink(missing_ok=True)
 
 for nome in arquivos:
     arq = saida / nome

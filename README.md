@@ -71,11 +71,16 @@ Cada região pode ser indicada de dois jeitos:
 Todas as regiões vão **na mesma linha**, separadas por espaço. Uma lista colada
 com uma por linha faz o terminal tentar rodar cada linha como um comando.
 
-Sai um arquivo por região em `saida/`, ao lado do `.pbf`, com o contorno da
-região incluído: `<codigo>_<nome>.osm.pbf` quando pedida pelo código IBGE e
+Sai um arquivo por região em `saida/`, ao lado do `.pbf`:
+`<codigo>_<nome>.osm.pbf` quando pedida pelo código IBGE e
 `r<id>_<nome>.osm.pbf` quando pedida pelo id (o `IBGE:GEOCODIGO` do `.pbf` pode
 estar desatualizado, então não é usado no nome). `--ruas` gera também
-`…ruas.osm.pbf` só com as vias `highway=*` e o contorno.
+`…ruas.osm.pbf` só com as vias `highway=*`. Os dois trazem a relação do
+contorno da região com todas as suas vias.
+
+Em `saida/aux/` ficam o polígono de cada região (`<regiao>.geojson`, útil para
+ver o contorno no QGIS ou usar como `bpolys` no ohsome) e os arquivos
+intermediários (`contornos*`, `config.json`), sobrescritos a cada execução.
 
 As regiões são recortadas em lotes de 5 por leitura do `.pbf` do Brasil, porque
 cada região do lote ocupa cerca de 1 GB de memória no osmium (o Docker Desktop
