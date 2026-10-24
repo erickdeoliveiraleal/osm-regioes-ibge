@@ -74,9 +74,9 @@ com uma por linha faz o terminal tentar rodar cada linha como um comando.
 Sai um arquivo por região em `saida/`, ao lado do `.pbf`:
 `<codigo>_<nome>.osm.pbf` quando pedida pelo código IBGE e
 `r<id>_<nome>.osm.pbf` quando pedida pelo id (o `IBGE:GEOCODIGO` do `.pbf` pode
-estar desatualizado, então não é usado no nome). `--ruas` gera também
-`…ruas.osm.pbf` só com as vias `highway=*`. Os dois trazem a relação do
-contorno da região com todas as suas vias.
+estar desatualizado, então não é usado no nome). `--ruas` gera também, em
+`saida/ruas/`, um `…ruas.osm.pbf` só com as vias `highway=*`. Os dois trazem a
+relação do contorno da região com todas as suas vias.
 
 Em `saida/aux/` ficam o polígono de cada região (`<regiao>.geojson`, útil para
 ver o contorno no QGIS ou usar como `bpolys` no ohsome) e os arquivos

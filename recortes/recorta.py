@@ -9,8 +9,8 @@ Uso:
             (ex.: r12907541)
   --osm     trata os números sem "r" como ids de relação do OSM (para colar a
             coluna "Relação OSM" da planilha)
-  --ruas    gera também um arquivo só com as vias highway=* (e os nós delas),
-            mais o contorno da região
+  --ruas    gera também, em saida/ruas/, um arquivo só com as vias highway=*
+            (e os nós delas), mais o contorno da região
 
 Exemplos:
   python -X utf8 recorta.py brazil-latest.osm.pbf 310037 310038 310039
@@ -124,8 +124,9 @@ for n, lote in enumerate(lotes, 1):
 # 4. Opcional: só as ruas, mais a relação do contorno com suas vias e nós
 arquivos = [e["output"] for e in extracts]
 if so_ruas:
+    (saida / "ruas").mkdir(exist_ok=True)
     for e in extracts:
-        ruas = e["output"].replace(".osm.pbf", ".ruas.osm.pbf")
+        ruas = "ruas/" + e["output"].replace(".osm.pbf", ".ruas.osm.pbf")
         osmium("tags-filter", f"saida/{e['output']}", "w/highway", "-o", "saida/aux/_ruas.osm.pbf", "--overwrite")
         osmium("getid", "-r", f"saida/{e['output']}", f"r{relacao_do_recorte[e['output']]}", "-o", "saida/aux/_contorno.osm.pbf",
                "--overwrite")
