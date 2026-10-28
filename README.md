@@ -87,6 +87,19 @@ cada região do lote ocupa cerca de 1 GB de memória no osmium (o Docker Desktop
 tem 16 GB numa máquina de 32 GB). Cada lote leva uns 2,5 minutos; 15 regiões
 levaram cerca de 9 minutos.
 
+### Comparar km de vias entre duas datas
+
+Guarde a pasta `saida` de uma data (ex.: renomeie para `saida-261023`), baixe
+um `.pbf` novo, recorte as mesmas regiões com `--ruas` e compare:
+
+```bash
+python -X utf8 km_vias.py D:/osm/pbf/saida-261023 D:/osm/pbf/saida --csv comparacao.csv
+```
+
+Mostra os km de `highway=*` por região (antes, depois, diferença) e por tipo de
+via, e grava o detalhe região × tipo no CSV. As vias são cortadas no contorno
+da região e medidas na esfera; pistas duplas contam duas vezes, como estão no OSM.
+
 O extrato da Geofabrik é atualizado uma vez por dia e vem sem usuário e
 changeset (mantém versão e data). Antes de editar no JOSM, use
 *Arquivo → Atualizar dados* para evitar conflitos.
