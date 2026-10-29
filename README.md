@@ -112,10 +112,10 @@ a Região Geográfica Imediata de Barreiros - Sirinhaém):
 
 ```
 [out:xml][timeout:600];
-rel(10570191);
+rel(12907483);
 map_to_area->.regiao;
 (
-  way(area.regiao);
+  way["highway"](area.regiao);
 );
 (._;>;);
 out meta;
